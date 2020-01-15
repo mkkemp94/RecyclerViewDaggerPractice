@@ -2,9 +2,12 @@ package com.quectel.recyclerviewdaggerpractice.di.modules;
 
 import android.content.Context;
 
-import com.quectel.recyclerviewdaggerpractice.ui.MainActivity;
 import com.quectel.recyclerviewdaggerpractice.di.qualifiers.ActivityContext;
 import com.quectel.recyclerviewdaggerpractice.di.scopes.ActivityScope;
+import com.quectel.recyclerviewdaggerpractice.ui.MainActivity;
+import com.quectel.recyclerviewdaggerpractice.ui.MainActivityContract;
+import com.quectel.recyclerviewdaggerpractice.ui.MainActivityPresenter;
+import com.quectel.recyclerviewdaggerpractice.ui.people.PeopleModelContract;
 
 import dagger.Module;
 import dagger.Provides;
@@ -13,8 +16,7 @@ import dagger.Provides;
 public class MainActivityContextModule
 {
     private MainActivity mMainActivity;
-    
-    public Context mContext;
+    private Context mContext;
     
     public MainActivityContextModule(MainActivity mainActivity)
     {
@@ -24,15 +26,21 @@ public class MainActivityContextModule
     
     @Provides
     @ActivityScope
-    public MainActivity provideMainActivity()
+    MainActivity provideMainActivity()
     {
         return mMainActivity;
+    }
+
+    @Provides
+    @ActivityScope
+    MainActivityContract.Presenter providePresenter(PeopleModelContract peopleInteractor) {
+        return new MainActivityPresenter(peopleInteractor);
     }
     
     @Provides
     @ActivityScope
     @ActivityContext
-    public Context provideContext()
+    Context provideContext()
     {
         return mContext;
     }

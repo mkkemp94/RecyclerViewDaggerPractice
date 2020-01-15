@@ -3,10 +3,12 @@ package com.quectel.recyclerviewdaggerpractice.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.quectel.recyclerviewdaggerpractice.R;
 import com.quectel.recyclerviewdaggerpractice.pojo.StarWars;
+import com.quectel.recyclerviewdaggerpractice.ui.MainActivityContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,16 +16,17 @@ import java.util.List;
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>
 {
     private List<StarWars.People> mData;
-    private RecyclerViewAdapter.ClickListener mClickListener;
+    private MainActivityContract.View.RecyclerViewItemClickListener mClickListener;
     
     @Inject
-    public RecyclerViewAdapter(ClickListener clickListener)
+    public RecyclerViewAdapter(MainActivityContract.View.RecyclerViewItemClickListener clickListener)
     {
         mClickListener = clickListener;
         mData = new ArrayList<>();
@@ -51,30 +54,27 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     
     class ViewHolder extends RecyclerView.ViewHolder
     {
-        private TextView txtName;
-        private TextView txtBirthYear;
-        private ConstraintLayout constraintLayoutContainer;
+        @BindView(R.id.txtName)
+        TextView txtName;
+        
+        @BindView(R.id.txtBirthYear)
+        TextView txtBirthYear;
+    
+        @BindView(R.id.recycler_view_list_row)
+        LinearLayout layoutContainer;
         
         ViewHolder(View itemView)
         {
             super(itemView);
-            
-            txtName = itemView.findViewById(R.id.txtName);
-            txtBirthYear = itemView.findViewById(R.id.txtBirthYear);
-            constraintLayoutContainer = itemView.findViewById(R.id.constraintLayout);
-            
-            constraintLayoutContainer.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view)
-                {
-                    mClickListener.launchIntent(mData.get(getAdapterPosition()).films.get(0));
-                }
-            });
+            ButterKnife.bind(this, itemView);
+            layoutContainer.setOnClickListener(
+                    (View view) ->
+                    {
+                        StarWars.People person = mData.get(getAdapterPosition());
+                        String data = person.films.get(0);
+                        mClickListener.itemClicked(data);
+                    });
         }
-    }
-    
-    public interface ClickListener {
-        void launchIntent(String fileName);
     }
     
     public void setData(List<StarWars.People> data)

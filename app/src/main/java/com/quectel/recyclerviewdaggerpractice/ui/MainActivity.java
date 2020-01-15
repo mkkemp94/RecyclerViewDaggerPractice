@@ -15,7 +15,6 @@ import com.quectel.recyclerviewdaggerpractice.di.modules.MainActivityContextModu
 import com.quectel.recyclerviewdaggerpractice.di.qualifiers.ActivityContext;
 import com.quectel.recyclerviewdaggerpractice.di.qualifiers.ApplicationContext;
 import com.quectel.recyclerviewdaggerpractice.pojo.StarWars;
-import com.quectel.recyclerviewdaggerpractice.retrofit.APIInterface;
 
 import java.util.List;
 
@@ -24,21 +23,22 @@ import javax.inject.Inject;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.ClickListener
+public class MainActivity extends AppCompatActivity implements
+        MainActivityContract.View,
+        MainActivityContract.View.RecyclerViewItemClickListener
 {
-    private RecyclerView mRecyclerView;
-    
     MainActivityComponent mMainActivityComponent;
     
     @Inject
-    public RecyclerViewAdapter mRecyclerViewAdapter;
+    public MainActivityContract.Presenter mPresenter;
+    
+//    @BindView(R.id.recyclerView)
+    public RecyclerView mRecyclerView;
     
     @Inject
-    public APIInterface mAPIInterface;
+    public RecyclerViewAdapter mRecyclerViewAdapter;
     
     @Inject
     @ApplicationContext
@@ -53,10 +53,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         
-        mRecyclerView = findViewById(R.id.recyclerView);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-    
         ApplicationComponent applicationComponent = MyApplication.get(this).getApplicationComponent();
         mMainActivityComponent = DaggerMainActivityComponent.builder()
                                                             .mainActivityContextModule(new MainActivityContextModule(this))
@@ -64,21 +62,24 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
                                                             .build();
         
         mMainActivityComponent.injectMainActivity(this);
-        mRecyclerView.setAdapter(mRecyclerViewAdapter);
-        
-        mAPIInterface.getPeople("json").enqueue(new Callback<StarWars>() {
-            @Override
-            public void onResponse(Call<StarWars> call, Response<StarWars> response)
-            {
-                populateRecyclerView(response.body().results);
-            }
     
-            @Override
-            public void onFailure(Call<StarWars> call, Throwable t)
-            {
-        
-            }
-        });
+        mRecyclerView = findViewById(R.id.recyclerView);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        mRecyclerView.setAdapter(mRecyclerViewAdapter);
+        mPresenter.attachView(this);
+    }
+    
+    @Override
+    public void itemClicked(String url)
+    {
+        Toast.makeText(mContext, "RecyclerView Row selected", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(mActivityContext, DetailActivity.class).putExtra("url", url));
+    }
+    
+    @Override
+    public void peopleLoaded(List<StarWars.People> people)
+    {
+        populateRecyclerView(people);
     }
     
     private void populateRecyclerView(List<StarWars.People> response)
@@ -87,9 +88,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
     }
     
     @Override
-    public void launchIntent(String url)
+    public void failedToLoadPeople(String error)
     {
-        Toast.makeText(mContext, "RecyclerView Row selected", Toast.LENGTH_SHORT).show();
-        startActivity(new Intent(mActivityContext, DetailActivity.class).putExtra("url", url));
+        Toast.makeText(mActivityContext, error, Toast.LENGTH_SHORT).show();
     }
 }
